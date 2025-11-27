@@ -38,7 +38,7 @@ export default function UploadPage() {
 
     const fetchUploadedFiles = async (token: string) => {
         try {
-            const response = await fetch('http://localhost:8000/api/files/list', {
+            const response = await fetch('${process.env.NEXT_PUBLIC_API_URL}/api/files/list', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
