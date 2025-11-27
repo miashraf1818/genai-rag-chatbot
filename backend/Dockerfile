@@ -18,12 +18,21 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 
 # Safety check: Remove torch from requirements.txt if present to avoid re-installing GPU version
-RUN sed -i '/torch==/d' requirements.txt
+RUN sed -i '/torch/d' requirements.txt
 
-# Install heavy dependencies individually to prevent "No space left on device"
-RUN pip install --no-cache-dir numpy pandas scipy
-RUN pip install --no-cache-dir scikit-learn
-RUN pip install --no-cache-dir transformers sentence-transformers
+# Install heavy dependencies individually with EXACT versions to prevent "No space left on device"
+# We install them one by one and clean cache to keep disk usage low.
+RUN pip install --no-cache-dir numpy==2.3.4 pandas==2.3.3 scipy==1.16.3
+RUN pip install --no-cache-dir scikit-learn==1.7.2
+RUN pip install --no-cache-dir transformers==4.57.1 sentence-transformers==5.1.2
+
+# Remove these heavy deps from requirements.txt so pip doesn't try to reinstall/upgrade them
+RUN sed -i '/numpy==/d' requirements.txt && \
+    sed -i '/pandas==/d' requirements.txt && \
+    sed -i '/scipy==/d' requirements.txt && \
+    sed -i '/scikit-learn==/d' requirements.txt && \
+    sed -i '/transformers==/d' requirements.txt && \
+    sed -i '/sentence-transformers==/d' requirements.txt
 
 # Install remaining Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
