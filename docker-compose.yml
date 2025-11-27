@@ -48,6 +48,8 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://54.82.86.123.nip.io:8000
     container_name: genai_frontend
     depends_on:
       - backend
