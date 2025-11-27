@@ -57,14 +57,14 @@ export default function AdminDashboard() {
 
         try {
             // Fetch stats
-            const statsRes = await fetch('${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats/overview', {
+            const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/stats/overview`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const statsData = await statsRes.json();
             setStats(statsData);
 
             // Fetch users
-            const usersRes = await fetch('${process.env.NEXT_PUBLIC_API_URL}/api/admin/users', {
+            const usersRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/admin/users`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 

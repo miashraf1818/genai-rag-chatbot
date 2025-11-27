@@ -80,7 +80,7 @@ export default function ChatPage() {
 
     const loadConversations = async (token: string) => {
         try {
-            const response = await fetch('${process.env.NEXT_PUBLIC_API_URL}/api/conversations/', {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/conversations/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

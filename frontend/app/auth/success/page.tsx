@@ -16,7 +16,7 @@ function AuthSuccessContent() {
             localStorage.setItem('token', token);
 
             // Fetch user info
-            fetch('${process.env.NEXT_PUBLIC_API_URL}/api/profile/', {
+            fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/profile/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
