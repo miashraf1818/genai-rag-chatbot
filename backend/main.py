@@ -33,6 +33,8 @@ app.add_middleware(
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:3002",
+        "http://54.82.86.123:3000",
+        "http://54.82.86.123.nip.io:3000",
     ],
     allow_credentials=True,
     allow_methods=["*"],
