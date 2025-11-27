@@ -7,7 +7,9 @@ A production-ready, full-stack AI chatbot application featuring **Retrieval-Augm
 ## ✨ Key Features
 
 ### 🧠 Advanced AI Capabilities
--   **RAG Pipeline**: Upload your own documents (PDF, TXT) to "chat" with them.
+This project is a RAG (Retrieval-Augmented Generation) chatbot that allows users to upload documents (PDF, DOCX, TXT) and chat with them using an LLM (Llama 3 via Groq). It features a modern, responsive UI built with Next.js and a robust FastAPI backend.
+
+> **Latest Update:** Optimized for AWS EC2 t2.micro deployment (CPU-only inference).
 -   **Smart Context**: Uses **Pinecone** vector database to retrieve relevant info for every query.
 -   **Llama 3 Powered**: Integrated with **Groq** for lightning-fast AI responses.
 -   **Streaming Responses**: Real-time text generation (like ChatGPT) using WebSockets.
