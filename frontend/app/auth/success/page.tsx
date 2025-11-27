@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Sparkles, CheckCircle } from 'lucide-react';
 
-export default function GoogleAuthSuccess() {
+function AuthSuccessContent() {
     const searchParams = useSearchParams();
 
     useEffect(() => {
@@ -69,5 +69,17 @@ export default function GoogleAuthSuccess() {
                 </div>
             </motion.div>
         </div>
+    );
+}
+
+export default function GoogleAuthSuccess() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-green-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        }>
+            <AuthSuccessContent />
+        </Suspense>
     );
 }
