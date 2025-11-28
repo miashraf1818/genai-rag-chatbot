@@ -62,6 +62,18 @@ The application is live and accessible via a secure Cloudflare Tunnel:
 
 ---
 
+## 📸 Screenshots
+
+### Chat Interface
+![Chat Interface](https://via.placeholder.com/800x500?text=Upload+Your+Chat+Screenshot+Here)
+*Real-time RAG chat with streaming responses.*
+
+### Admin Panel
+![Admin Panel](https://via.placeholder.com/800x500?text=Upload+Your+Admin+Screenshot+Here)
+*User management and system statistics.*
+
+---
+
 ## 🛠️ Tech Stack
 
 | Component | Technology |
