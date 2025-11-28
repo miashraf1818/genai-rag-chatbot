@@ -63,7 +63,26 @@ docker compose up -d
 docker compose exec backend python make_admin.py your-email@gmail.com
 ```
 
-### **View Logs**
 ```bash
 docker compose logs -f backend
 ```
+
+---
+
+## 🏗️ Architecture & Technical Decisions
+
+### **DNS Strategy: Wildcard Resolution (`nip.io`)**
+*   **Context**: Google OAuth 2.0 strictly prohibits the use of raw IP addresses (e.g., `http://54.82.86.123/callback`) for Authorized Redirect URIs. It requires a valid Top-Level Domain (TLD).
+*   **Solution**: We utilized `nip.io`, a dynamic wildcard DNS service.
+    *   **Mechanism**: `54.82.86.123.nip.io` resolves directly to `54.82.86.123`.
+    *   **Benefit**: This satisfies OAuth domain requirements without the overhead of purchasing and configuring a custom domain for the MVP phase.
+
+### **SSL/TLS & Security**
+*   **Current State**: The application runs on HTTP (`:3000` and `:8000`) behind the EC2 security group.
+*   **Cloudflare Tunnel**: For secure access, we implemented `cloudflared`. This creates an outbound-only connection to Cloudflare's edge, providing an auto-generated HTTPS endpoint (`*.trycloudflare.com`) that tunnels traffic to the local Docker container.
+*   **Production Path**: In a production environment, SSL termination should occur at a Load Balancer (ALB) or Reverse Proxy (Nginx) using a custom domain and Let's Encrypt certificates.
+
+### **Infrastructure Scalability**
+*   **Compute**: Currently deployed on `t2.micro` (Free Tier). This is resource-constrained (1 vCPU, 1GB RAM).
+*   **Scaling Strategy**: The Dockerized architecture allows for horizontal scaling. The database should be migrated to AWS RDS, and the application containers can be orchestrated via ECS or Kubernetes (EKS) for high availability.
+
