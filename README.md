@@ -77,7 +77,13 @@ docker compose up -d --build
 
 ## ☁️ Deployment (AWS EC2)
 
-See the detailed [Deployment Guide](deployment_guide.md) for step-by-step instructions on deploying to AWS.
+The application is successfully deployed on AWS EC2.
+
+*   **Infrastructure**: Docker Compose on Ubuntu `t2.micro`.
+*   **DNS Strategy**: `nip.io` for wildcard resolution (Google OAuth compliance).
+*   **Security**: Cloudflare Tunnel for secure HTTPS access.
+
+👉 **Read the full [Deployment Summary & Technical Notes](DEPLOYMENT_SUMMARY.md)** for architecture details, performance benchmarks, and design decisions.
 
 ### Brief Overview:
 1.  Launch an Ubuntu EC2 instance.
