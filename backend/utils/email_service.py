@@ -154,7 +154,7 @@ class EmailService:
                     </div>
 
                     <p style="text-align: center;">
-                        <a href="http://localhost:3000" class="cta-button">Start Chatting Now →</a>
+                        <a href="{config('FRONTEND_URL', default='http://localhost:3000')}" class="cta-button">Start Chatting Now →</a>
                     </p>
 
                     <p style="font-size: 14px; color: #666; margin-top: 30px;">
