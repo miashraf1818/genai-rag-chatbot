@@ -47,7 +47,7 @@ app.include_router(auth_router)
 
 # Include file upload router
 try:
-    from backend.api.files import router as files_router
+    from api.files import router as files_router
     app.include_router(files_router)
     print("✅ File upload router loaded successfully")
 except ImportError:
@@ -55,7 +55,7 @@ except ImportError:
 
 # Include conversations router
 try:
-    from backend.api.conversations import router as conversations_router
+    from api.conversations import router as conversations_router
     app.include_router(conversations_router)
     print("✅ Conversations router loaded successfully")
 except ImportError:
@@ -63,7 +63,7 @@ except ImportError:
 
 # Include profile router
 try:
-    from backend.api.profile import router as profile_router
+    from api.profile import router as profile_router
     app.include_router(profile_router)
     print("✅ Profile router loaded successfully")
 except ImportError:
@@ -71,14 +71,14 @@ except ImportError:
 
 # Include chat history router
 try:
-    from backend.api.chat_history import router as chat_history_router
+    from api.chat_history import router as chat_history_router
     app.include_router(chat_history_router)
 except ImportError:
     print("⚠️ Chat history router not found - create backend/api/chat_history.py first")
 
 # Include admin router
 try:
-    from backend.api.admin import router as admin_router
+    from api.admin import router as admin_router
     app.include_router(admin_router)
     print("✅ Admin router loaded successfully")
 except ImportError as e:
@@ -172,7 +172,7 @@ async def chat_with_auth(
     - question (required): The user's question
     - conversation_id (optional): ID of conversation to add to, creates new if not provided
     """
-    from backend.database.models import Conversation
+    from database.models import Conversation
     import uuid
     
     user_query = query.get("question", "")
@@ -204,7 +204,7 @@ async def chat_with_auth(
 
     # Get context from Pinecone - FILTERED BY USER ID
     try:
-        from backend.vectorstore.pinecone_utils import vectorstore
+        from vectorstore.pinecone_utils import vectorstore
         
         # Search with user_id filter (each user only sees their documents)
         results = vectorstore.similarity_search(
