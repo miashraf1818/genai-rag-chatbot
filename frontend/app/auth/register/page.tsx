@@ -227,7 +227,7 @@ export default function RegisterPage() {
                         {/* Google Sign Up */}
                         <button
                             type="button"
-                            onClick={() => window.location.href = 'http://localhost:8000/auth/google/login'}
+                            onClick={() => window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/login`}
                             className="w-full py-3.5 px-6 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-all duration-200 flex items-center justify-center space-x-3 group"
                         >
                             <svg className="w-5 h-5 group-hover:scale-110 transition-transform" viewBox="0 0 24 24">

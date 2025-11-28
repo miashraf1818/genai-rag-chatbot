@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from database.connection import get_db
 from database.models import User, ChatHistory, AdminAction, UserAnalytics
-from auth.dependencies import get_current_useradmin
+from auth.dependencies import require_admin
 
 router = APIRouter(prefix="/api/admin", tags=["Admin"])
 

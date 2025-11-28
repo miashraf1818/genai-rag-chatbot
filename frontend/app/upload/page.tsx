@@ -130,7 +130,7 @@ export default function UploadPage() {
                 }, 200);
 
                 // Actual API call
-                const response = await fetch('http://localhost:8000/api/upload', {
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/upload`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`
