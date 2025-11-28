@@ -91,7 +91,7 @@ async def upload_file(
             chunk.metadata['uploaded_by'] = current_user.username
         
         # Lazy import vectorstore (avoid startup errors)
-        from backend.vectorstore.pinecone_utils import vectorstore
+        from vectorstore.pinecone_utils import vectorstore
         
         # OPTION: Delete user's old documents first (uncomment if you want this)
         # This makes each user have only their LATEST upload
