@@ -5,9 +5,10 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # API Keys
-GROQ_API_KEY = os.getenv("your api key")
-PINECONE_API_KEY = os.getenv("your api key ")
-PINECONE_ENV = os.getenv("us-east-1")
+# API Keys
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_ENV = os.getenv("PINECONE_ENV", "us-east-1")
 
 # Pinecone settings
 INDEX_NAME = "my-genai-index"

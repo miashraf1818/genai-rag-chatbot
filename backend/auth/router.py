@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from datetime import datetime
 from backend.database.connection import get_db
@@ -171,14 +171,15 @@ oauth.register(
 
 
 @router.get("/google/login")
-async def google_login(request):
+async def google_login(request: Request):
     """Redirect to Google OAuth"""
-    redirect_uri = config("FRONTEND_URL", default="http://localhost:3000") + "/auth/google/callback"
+    # Callback should go to BACKEND, not frontend!
+    redirect_uri = "http://localhost:8000/auth/google/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/google/callback")
-async def google_callback(request, db: Session = Depends(get_db)):
+async def google_callback(request: Request, db: Session = Depends(get_db)):
     """Handle Google OAuth callback"""
     try:
         # Get token from Google

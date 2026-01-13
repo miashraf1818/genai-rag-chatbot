@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  # Database Service
+  db:
+    image: postgres:15-alpine
+    container_name: genai_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-genai_chatbot}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - genai-network
+    restart: always
+
+  # Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: genai_backend
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-genai_chatbot}
+      - SECRET_KEY=${SECRET_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - PINECONE_INDEX_NAME=${PINECONE_INDEX_NAME}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=https://away-lucy-layer-extension.trycloudflare.com/auth/google/callback
+      - FRONTEND_URL=https://away-lucy-layer-extension.trycloudflare.com
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app # For development (hot reload) - remove in prod if desired
+      - ./uploads:/app/uploads
+    networks:
+      - genai-network
+    restart: always
+
+  # Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ""
+    container_name: genai_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=
+    networks:
+      - genai-network
+    restart: always
+
+  # Cloudflare Tunnel Service
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: genai_tunnel
+    command: tunnel --url http://frontend:3000
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    networks:
+      - genai-network
+
+volumes:
+  postgres_data:
+
+
+networks:
+  genai-network:
+    driver: bridge

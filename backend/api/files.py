@@ -1,177 +1,174 @@
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
-from typing import List
-import os
-import uuid
-from datetime import datetime
-from backend.auth.dependencies import get_current_user
+from sqlalchemy.orm import Session
+from backend.database.connection import get_db
 from backend.database.models import User
-from backend.utils.document_processor import DocumentProcessor
-from backend.vectorstore.document_indexer import document_indexer
+from backend.auth.dependencies import get_current_user
+# Lazy import vectorstore to avoid startup errors
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
+from langchain_core.documents import Document
+import os
+import tempfile
 
-router = APIRouter(prefix="/files", tags=["File Upload"])
-
-# File storage directory
-UPLOAD_DIR = "uploads"
-os.makedirs(UPLOAD_DIR, exist_ok=True)
-
-ALLOWED_EXTENSIONS = {'.pdf', '.txt', '.doc', '.docx', '.md'}
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
-
-# Initialize document processor
-doc_processor = DocumentProcessor()
+router = APIRouter(prefix="/api", tags=["File Upload"])
 
 
 @router.post("/upload")
 async def upload_file(
-        file: UploadFile = File(...),
-        process_for_rag: bool = True,  # NEW: Enable RAG processing by default
-        current_user: User = Depends(get_current_user)
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-    """Upload and optionally process file for RAG"""
-
-    # Check file extension
+    """
+    Upload and process a document file
+    Supports: PDF, TXT, MD, DOCX
+    """
+    
+    # Check file type
+    allowed_extensions = ['.pdf', '.txt', '.md', '.docx']
     file_ext = os.path.splitext(file.filename)[1].lower()
-    if file_ext not in ALLOWED_EXTENSIONS:
+    
+    if file_ext not in allowed_extensions:
         raise HTTPException(
             status_code=400,
-            detail=f"File type not allowed. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
+            detail=f"File type {file_ext} not supported. Allowed: PDF, TXT, MD, DOCX"
         )
-
-    # Read file content
+    
+    # Check file size (max 10MB)
     content = await file.read()
-
-    # Check file size
-    if len(content) > MAX_FILE_SIZE:
+    file_size = len(content)
+    
+    max_size = 10 * 1024 * 1024  # 10MB
+    if file_size > max_size:
         raise HTTPException(
             status_code=400,
-            detail=f"File too large. Max size: {MAX_FILE_SIZE / 1024 / 1024}MB"
+            detail=f"File too large. Max 10MB"
+        )
+    
+    try:
+        # Save file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=file_ext) as temp_file:
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+        
+        # Process based on file type
+        documents = []
+        
+        if file_ext == '.pdf':
+            # Load PDF
+            loader = PyPDFLoader(temp_file_path)
+            documents = loader.load()
+        
+        elif file_ext == '.docx':
+            # Load DOCX
+            try:
+                loader = Docx2txtLoader(temp_file_path)
+                documents = loader.load()
+            except Exception as e:
+                print(f"Error loading DOCX: {e}")
+                # Fallback or error
+                raise HTTPException(status_code=400, detail="Error reading DOCX file. Ensure it is valid.")
+
+        elif file_ext in ['.txt', '.md']:
+            # Load text file
+            text_content = content.decode('utf-8')
+            documents = [Document(
+                page_content=text_content,
+                metadata={"source": file.filename}
+            )]
+        
+        # Split documents into chunks
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+        chunks = text_splitter.split_documents(documents)
+        
+        # Add metadata
+        for chunk in chunks:
+            chunk.metadata['user_id'] = str(current_user.id)  # Convert to string for Pinecone
+            chunk.metadata['filename'] = file.filename
+            chunk.metadata['uploaded_by'] = current_user.username
+        
+        # Lazy import vectorstore (avoid startup errors)
+        from backend.vectorstore.pinecone_utils import vectorstore
+        
+        # OPTION: Delete user's old documents first (uncomment if you want this)
+        # This makes each user have only their LATEST upload
+        # try:
+        #     from pinecone import Pinecone
+        #     pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
+        #     index = pc.Index(os.getenv("PINECONE_INDEX_NAME", "my-genai-index"))
+        #     
+        #     # Delete all vectors for this user
+        #     index.delete(filter={"user_id": {"$eq": str(current_user.id)}})
+        #     print(f"✅ Cleared old documents for user {current_user.id}")
+        # except Exception as e:
+        #     print(f"⚠️ Could not clear old docs: {e}")
+        
+        # Add to Pinecone
+        vectorstore.add_documents(chunks)
+        
+        # Clean up temp file
+        os.unlink(temp_file_path)
+        
+        return {
+            "success": True,
+            "message": f"Successfully processed {file.filename}",
+            "filename": file.filename,
+            "chunks_created": len(chunks),
+            "file_size_kb": round(file_size / 1024, 2)
+        }
+    
+    except Exception as e:
+        # Clean up temp file if exists
+        if 'temp_file_path' in locals():
+            try:
+                os.unlink(temp_file_path)
+            except:
+                pass
+        
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing file: {str(e)}"
         )
 
-    # Generate unique filename and document ID
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    document_id = str(uuid.uuid4())
-    safe_filename = f"{current_user.id}_{timestamp}_{file.filename}"
-    file_path = os.path.join(UPLOAD_DIR, safe_filename)
-
-    # Save file
-    with open(file_path, "wb") as f:
-        f.write(content)
-
-    response_data = {
-        "message": "File uploaded successfully",
-        "filename": file.filename,
-        "size": len(content),
-        "path": file_path,
-        "document_id": document_id
-    }
-
-    # ✅ PROCESS FOR RAG
-    if process_for_rag:
-        try:
-            # Extract text and split into chunks
-            chunks = doc_processor.process_document(
-                file_path,
-                metadata={
-                    "user_id": current_user.id,
-                    "username": current_user.username
-                }
-            )
-
-            # Index into Pinecone
-            index_result = document_indexer.index_document_chunks(
-                chunks=chunks,
-                user_id=current_user.id,
-                document_id=document_id
-            )
-
-            response_data["rag_processing"] = {
-                "status": "success",
-                "chunks_indexed": index_result["chunks_indexed"],
-                "document_id": index_result["document_id"],
-                "message": f"✅ Document processed! {index_result['chunks_indexed']} chunks indexed for AI search."
-            }
-
-        except Exception as e:
-            response_data["rag_processing"] = {
-                "status": "failed",
-                "error": str(e),
-                "message": "⚠️ File uploaded but RAG processing failed. File is still saved."
-            }
-
-    return response_data
 
 
-@router.post("/upload-multiple")
-async def upload_multiple_files(
-        files: List[UploadFile] = File(...),
-        process_for_rag: bool = True,
-        current_user: User = Depends(get_current_user)
-):
-    """Upload multiple files"""
 
-    if len(files) > 10:
-        raise HTTPException(status_code=400, detail="Maximum 10 files at once")
-
-    results = []
-
-    for file in files:
-        try:
-            # Call the single upload function
-            result = await upload_file(file, process_for_rag, current_user)
-            results.append({"filename": file.filename, "status": "success", **result})
-        except HTTPException as e:
-            results.append({"filename": file.filename, "status": "failed", "error": str(e.detail)})
-
-    return {"results": results, "total_files": len(files)}
-
-
-@router.get("/list")
-async def list_user_files(current_user: User = Depends(get_current_user)):
-    """List all files uploaded by current user"""
-
+@router.get("/files/list")
+async def list_uploaded_files(current_user: User = Depends(get_current_user)):
+    """Get list of files uploaded by current user"""
+    upload_dir = "uploads"
+    
+    if not os.path.exists(upload_dir):
+        os.makedirs(upload_dir)
+        return {"files": [], "message": "No files uploaded yet"}
+    
     user_files = []
-
-    if not os.path.exists(UPLOAD_DIR):
-        return {"files": [], "count": 0}
-
-    for filename in os.listdir(UPLOAD_DIR):
+    
+    for filename in os.listdir(upload_dir):
+        # Files are saved as: {user_id}_{timestamp}_{filename}
         if filename.startswith(f"{current_user.id}_"):
-            file_path = os.path.join(UPLOAD_DIR, filename)
+            file_path = os.path.join(upload_dir, filename)
             file_stat = os.stat(file_path)
-
+            
+            # Extract original filename (remove user_id and timestamp prefix)
+            parts = filename.split('_', 2)
+            original_name = parts[2] if len(parts) > 2 else filename
+            
             user_files.append({
-                "filename": filename.split("_", 2)[2],  # Remove user_id and timestamp
+                "filename": original_name,
                 "size": file_stat.st_size,
-                "uploaded_at": datetime.fromtimestamp(file_stat.st_ctime).isoformat()
+                "uploaded_at": file_stat.st_ctime,
+                "full_path": filename
             })
-
-    return {"files": user_files, "count": len(user_files)}
-
-
-@router.delete("/delete/{filename}")
-async def delete_file(
-        filename: str,
-        current_user: User = Depends(get_current_user)
-):
-    """Delete a specific file"""
-
-    # Find the actual file with user_id prefix
-    actual_filename = None
-    for f in os.listdir(UPLOAD_DIR):
-        if f.startswith(f"{current_user.id}_") and f.endswith(filename):
-            actual_filename = f
-            break
-
-    if not actual_filename:
-        raise HTTPException(status_code=404, detail="File not found")
-
-    file_path = os.path.join(UPLOAD_DIR, actual_filename)
-
-    try:
-        os.remove(file_path)
-        return {
-            "message": "File deleted successfully",
-            "filename": filename
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to delete file: {str(e)}")
+    
+    # Sort by upload time (newest first)
+    user_files.sort(key=lambda x: x['uploaded_at'], reverse=True)
+    
+    return {
+        "files": user_files,
+        "count": len(user_files),
+        "user": current_user.username
+    }

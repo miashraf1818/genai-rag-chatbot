@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 load_dotenv(".env")
 
 # Initialize Pinecone (new way, Nov 2025)
-pc = Pinecone(api_key=os.getenv("your api key "))
+pc = Pinecone(api_key=os.getenv("PINECONE_API_KEY"))
 
 # Load PDF
 loader = PyPDFLoader('data/docs/django_guide.pdf')

@@ -41,7 +41,7 @@ htmlcov/
 
 # Vector database storage (if using Chroma/FAISS)
 chroma_db/
-vectorstore/
+# vectorstore/
 *.index
 
 # Model weights (if storing locally)
