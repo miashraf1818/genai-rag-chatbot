@@ -16,7 +16,7 @@ function AuthSuccessContent() {
             localStorage.setItem('token', token);
 
             // Fetch user info
-            fetch('http://localhost:8000/api/profile/', {
+            fetch('/api/profile/', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }

@@ -38,7 +38,7 @@ export default function UploadPage() {
 
     const fetchUploadedFiles = async (token: string) => {
         try {
-            const response = await fetch('http://localhost:8000/api/files/list', {
+            const response = await fetch('/api/files/list', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -130,7 +130,7 @@ export default function UploadPage() {
                 }, 200);
 
                 // Actual API call
-                const response = await fetch('http://localhost:8000/api/upload', {
+                const response = await fetch('/api/upload', {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${token}`

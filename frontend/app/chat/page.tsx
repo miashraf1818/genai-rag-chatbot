@@ -80,7 +80,7 @@ export default function ChatPage() {
 
     const loadConversations = async (token: string) => {
         try {
-            const response = await fetch('http://localhost:8000/api/conversations/', {
+            const response = await fetch('/api/conversations/', {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -98,7 +98,7 @@ export default function ChatPage() {
     const loadConversation = async (conversationId: string) => {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`http://localhost:8000/api/conversations/${conversationId}`, {
+            const response = await fetch(`/api/conversations/${conversationId}`, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
@@ -153,7 +153,7 @@ export default function ChatPage() {
 
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch('http://localhost:8000/api/chat', {
+            const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ export default function ChatPage() {
     const saveConversationTitle = async (convId: string) => {
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`http://localhost:8000/api/conversations/${convId}`, {
+            const response = await fetch(`/api/conversations/${convId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -233,7 +233,7 @@ export default function ChatPage() {
 
         const token = localStorage.getItem('token');
         try {
-            const response = await fetch(`http://localhost:8000/api/conversations/${convId}`, {
+            const response = await fetch(`/api/conversations/${convId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`

@@ -57,14 +57,14 @@ export default function AdminDashboard() {
 
         try {
             // Fetch stats
-            const statsRes = await fetch('http://localhost:8000/api/admin/stats/overview', {
+            const statsRes = await fetch('/api/admin/stats/overview', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const statsData = await statsRes.json();
             setStats(statsData);
 
             // Fetch users
-            const usersRes = await fetch('http://localhost:8000/api/admin/users', {
+            const usersRes = await fetch('/api/admin/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -86,7 +86,7 @@ export default function AdminDashboard() {
         const token = localStorage.getItem('token');
 
         try {
-            await fetch(`http://localhost:8000/api/admin/users/${userId}/${isActive ? 'block' : 'unblock'}`, {
+            await fetch(`/api/admin/users/${userId}/${isActive ? 'block' : 'unblock'}`, {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
