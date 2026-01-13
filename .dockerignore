@@ -1,0 +1,8 @@
+frontend
+node_modules
+.git
+.venv
+.idea
+__pycache__
+*.pyc
+.DS_Store

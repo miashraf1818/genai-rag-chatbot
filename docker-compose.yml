@@ -20,8 +20,8 @@ services:
   # Backend Service
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: backend/Dockerfile
     container_name: genai_backend
     depends_on:
       - db
